@@ -18,5 +18,10 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
+          # The default GITHUB_TOKEN cannot open PRs when the org disables
+          # "Allow GitHub Actions to create and approve pull requests". Add a
+          # RELEASE_PLEASE_TOKEN repo secret (a PAT with repo scope) to bypass that
+          # org policy without changing org settings; otherwise enable the org toggle.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json

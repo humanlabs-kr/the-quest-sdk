@@ -73,6 +73,12 @@ Required GitHub Actions **secrets** (never committed — this is a public repo):
 | `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD` | publish-android → Maven Central |
 | `SIGNING_KEY`, `SIGNING_KEY_PASSWORD` | publish-android → GPG signing |
 | `COCOAPODS_TRUNK_TOKEN` | publish-ios → CocoaPods trunk |
+| `RELEASE_PLEASE_TOKEN` *(one-time)* | release-please → open Release PRs (see below) |
+
+> **Release PR permission:** release-please opens the Release PRs. If your org disables
+> *"Allow GitHub Actions to create and approve pull requests"*, the default token can't do
+> this. Either enable that org/repo Actions setting, **or** add a `RELEASE_PLEASE_TOKEN`
+> repo secret (a PAT with `repo` scope) — the workflow prefers it automatically.
 
 ## Repo layout
 

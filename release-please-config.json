@@ -20,16 +20,16 @@
       "release-type": "simple",
       "component": "android",
       "extra-files": [
-        "android/gradle.properties",
-        "android/sdk/src/main/kotlin/world/humanlabs/quest/SdkInfo.kt"
+        "gradle.properties",
+        "sdk/src/main/kotlin/world/humanlabs/quest/SdkInfo.kt"
       ]
     },
     "ios": {
       "release-type": "simple",
       "component": "ios",
       "extra-files": [
-        "ios/TheQuestOfferwall.podspec",
-        "ios/Sources/TheQuestOfferwall/SDKInfo.swift"
+        "TheQuestOfferwall.podspec",
+        "Sources/TheQuestOfferwall/SDKInfo.swift"
       ]
     }
   }
