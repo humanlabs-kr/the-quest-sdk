@@ -1,0 +1,69 @@
+{
+  "name": "@thequest/offerwall-expo",
+  "version": "0.1.0",
+  "description": "Drop-in Expo / React Native SDK to embed The Quest offerwall in a hosted WebView.",
+  "keywords": [
+    "offerwall",
+    "rewards",
+    "expo",
+    "react-native",
+    "webview",
+    "thequest"
+  ],
+  "license": "MIT",
+  "author": "Humanlabs <dev@humanlabs.world>",
+  "homepage": "https://github.com/humanlabs-kr/the-quest-sdk/tree/main/expo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/humanlabs-kr/the-quest-sdk.git",
+    "directory": "expo"
+  },
+  "bugs": {
+    "url": "https://github.com/humanlabs-kr/the-quest-sdk/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "app.plugin.js",
+    "llms.txt",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/gen-version.mjs && tsc -p tsconfig.build.json",
+    "typecheck": "node scripts/gen-version.mjs && tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build",
+    "test": "echo no tests yet"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "expo-constants": ">=15.0.0",
+    "expo-linking": ">=5.0.0",
+    "expo-localization": ">=14.0.0",
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0",
+    "react-native-webview": ">=13.0.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-localization": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.79",
+    "expo-constants": "~16.0.2",
+    "expo-linking": "~6.3.1",
+    "expo-localization": "~15.0.3",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-webview": "13.10.5",
+    "typescript": "^5.5.4"
+  }
+}

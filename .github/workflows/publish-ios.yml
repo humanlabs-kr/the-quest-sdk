@@ -1,0 +1,20 @@
+name: publish-ios
+
+on:
+  push:
+    tags: ["ios-v*"]
+
+jobs:
+  publish:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      # `pod trunk push` clones s.source (this tag) and validates against it, so the
+      # repo-root-relative source_files resolve correctly (no separate local lint).
+      - name: Push to CocoaPods trunk
+        run: pod trunk push TheQuestOfferwall.podspec --allow-warnings
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}

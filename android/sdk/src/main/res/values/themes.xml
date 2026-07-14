@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Full-screen, no action bar. Insets handled in code via WindowInsetsCompat. -->
+    <style name="Theme.TheQuest.Offerwall" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/tq_background</item>
+        <item name="android:statusBarColor">@color/tq_header_background</item>
+        <item name="android:navigationBarColor">@color/tq_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

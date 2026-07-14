@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": true,
+  "include-component-in-tag": true,
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true }
+  ],
+  "packages": {
+    "expo": {
+      "release-type": "node",
+      "component": "expo",
+      "package-name": "@thequest/offerwall-expo"
+    },
+    "android": {
+      "release-type": "simple",
+      "component": "android",
+      "extra-files": [
+        "android/gradle.properties",
+        "android/sdk/src/main/kotlin/world/humanlabs/quest/SdkInfo.kt"
+      ]
+    },
+    "ios": {
+      "release-type": "simple",
+      "component": "ios",
+      "extra-files": [
+        "ios/TheQuestOfferwall.podspec",
+        "ios/Sources/TheQuestOfferwall/SDKInfo.swift"
+      ]
+    }
+  }
+}

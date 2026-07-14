@@ -1,0 +1,73 @@
+# TheQuestOfferwall (iOS SDK)
+
+Embeds The Quest offerwall in a hosted WKWebView with a native header. Public API is
+essentially one call: `show()`. Swift 5.9, iOS 15+, no external dependencies.
+UIKit + WebKit only. Package/product/target name: TheQuestOfferwall.
+
+## Install
+- CocoaPods (primary): `pod 'TheQuestOfferwall'`
+- SPM: reference the repo's `ios/` package directory, product `TheQuestOfferwall`.
+
+## Configure (build-time, Bundle.main Info.plist)
+- `TheQuestAppId` (String, REQUIRED): 10-char app id (not secret). Missing/empty => show() logs an error and aborts (no crash).
+- `TheQuestEnvironment` (String, optional): "production" (default) or "staging".
+- Environment base URLs: production=https://quest.humanlabs.world, staging=https://quest.seriesc.dev
+
+## Public API
+```swift
+import TheQuestOfferwall
+
+public final class TheQuest {
+  public static let shared: TheQuest
+  public func show(
+    from presenter: UIViewController,
+    userId: String,
+    launchProvider: (@Sendable (_ userId: String) async throws -> LaunchToken)? = nil,
+    onClose: (() -> Void)? = nil
+  )
+}
+
+public struct LaunchToken: Sendable {
+  public let ts: String
+  public let nonce: String
+  public let sig: String
+  public let locale: String?
+  public init(ts: String, nonce: String, sig: String, locale: String? = nil)
+}
+
+public enum TheQuestEnvironment: String, Sendable { case production, staging }
+public enum TheQuestError: Error { case invalidLaunchURL }
+public enum SDKInfo { public static let version: String } // "0.1.0"
+```
+
+## Modes
+- Standard (launchProvider == nil): unsigned. `show(from:userId:)`.
+- Secure (launchProvider != nil): the closure is awaited on EVERY show() to fetch
+  `{ ts, nonce, sig, locale? }` from YOUR backend (which holds the app secret; never
+  embed it). A spinner shows while awaiting; a thrown error shows a retry screen.
+
+## Launch URL
+`{base}/?app_id={appId}&user_id={userId}` + (secure only) `&ts=&nonce=&sig=` + `&locale=` (always).
+All values percent-encoded. Standard-mode locale = device locale mapped to en/id/es/pt
+(fallback en). Secure-mode locale = exactly the locale the backend signed (empty if none).
+
+## WebView / bridge (see docs/BRIDGE.md)
+- Full-screen OfferwallViewController: 52pt native header (leading ✕ close button, optional centered title), WKWebView below, safe-area respected.
+- Persistent WKWebsiteDataStore.default() (keeps qs_session cookie).
+- customUserAgent = default UA + " TheQuestSDK/<version> (ios)".
+- Bridge injected at .atDocumentStart as window.TheQuestNative with platform="ios",
+  version=<sdk semver>; `_post` -> window.webkit.messageHandlers.theQuestNative.postMessage(obj).
+- Native handles web->native messages: openUrl -> UIApplication.open (external); close -> dismiss + onClose; ready -> hide spinner.
+- Spinner until `ready` or didFinish; retry screen on didFail / didFailProvisionalNavigation.
+- Offerwall webview is never navigated cross-origin; openUrl opens externally only.
+- onClose fires once (header button, web close, or interactive dismissal).
+
+## Files
+- Sources/TheQuestOfferwall/TheQuest.swift — singleton + show()
+- Sources/TheQuestOfferwall/Config/TheQuestConfig.swift — Info.plist reader + Environment + base URL
+- Sources/TheQuestOfferwall/Models/LaunchToken.swift
+- Sources/TheQuestOfferwall/WebView/OfferwallViewController.swift
+- Sources/TheQuestOfferwall/WebView/LaunchURLBuilder.swift — pure, unit-tested URL builder
+- Sources/TheQuestOfferwall/Bridge/BridgeScript.swift — injected JS + message parsing
+- Sources/TheQuestOfferwall/SDKInfo.swift — version
+- Sources/TheQuestOfferwall/Resources/PrivacyInfo.xcprivacy — privacy manifest (no tracking)

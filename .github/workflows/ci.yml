@@ -1,0 +1,55 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  expo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test --if-present
+
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew :sdk:assembleRelease :sdk:testReleaseUnitTest --stacktrace
+
+  ios:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      # `swift build` targets the macOS host (no UIKit) and would fail — this is an
+      # iOS-only library, so compile it against the iOS Simulator SDK via xcodebuild.
+      - name: Build (iOS Simulator)
+        run: xcodebuild -scheme TheQuestOfferwall -destination 'generic/platform=iOS Simulator' -skipPackagePluginValidation build
+      # Podspec paths are repo-root relative (podspec lives in ios/), which `pod lib lint`
+      # can't resolve locally. Validation happens against the git tag at publish time
+      # (pod trunk push). See publish-ios.yml.

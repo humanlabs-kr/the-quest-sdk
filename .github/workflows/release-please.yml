@@ -1,0 +1,22 @@
+name: release-please
+
+# Analyzes conventional commits on `main` and opens per-package Release PRs
+# (version bump + CHANGELOG). Merging a Release PR creates the tag
+# (expo-v*, android-v*, ios-v*) that triggers the matching publish workflow.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

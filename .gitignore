@@ -1,0 +1,51 @@
+# ── Secrets / credentials (PUBLIC REPO — never commit) ────────────────────────
+*.env
+.env*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.keystore
+*.jks
+*.mobileprovision
+*.cer
+*.certSigningRequest
+secrets/
+**/google-services.json
+**/GoogleService-Info.plist
+*.token
+
+# ── Node / Expo ───────────────────────────────────────────────────────────────
+node_modules/
+expo/dist/
+expo/lib/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Android / Gradle ──────────────────────────────────────────────────────────
+android/.gradle/
+android/build/
+android/**/build/
+android/local.properties
+android/captures/
+android/.cxx/
+*.iml
+
+# ── iOS / Swift / CocoaPods ───────────────────────────────────────────────────
+ios/.build/
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace
+!ios/*.xcworkspace/contents.xcworkspacedata
+ios/Pods/
+xcuserdata/
+*.xcuserstate
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,55 @@
+# The Quest Offerwall — Android SDK (llms.txt)
+
+Kotlin SDK that embeds The Quest offerwall in a hosted WebView inside a dedicated
+full-screen Activity with a native header. Public API is essentially just `show()`.
+
+## Install
+Maven Central: `implementation("world.humanlabs:quest-offerwall:0.1.0")`
+Min SDK 24 (Android 7.0). JDK 17.
+
+## Configure (AndroidManifest <meta-data>, inside <application>)
+- `world.humanlabs.quest.APP_ID` (String, required) — 10-char App ID, not secret.
+- `world.humanlabs.quest.ENVIRONMENT` (String, optional) — "production" (default) or "staging".
+  production=https://quest.humanlabs.world, staging=https://quest.seriesc.dev.
+If APP_ID is missing the SDK logs an error and no-ops (never crashes).
+
+## Public API
+```kotlin
+object TheQuest {
+  fun show(
+    context: Context,
+    userId: String,
+    launchProvider: (suspend (userId: String) -> LaunchToken)? = null, // null = standard mode
+    onClose: (() -> Unit)? = null,
+  )
+}
+data class LaunchToken(val ts: String, val nonce: String, val sig: String, val locale: String? = null)
+```
+
+## Modes
+- Standard: `show(context, userId)`. No signing.
+- Secure: pass `launchProvider` returning `{ ts, nonce, sig, locale? }` from YOUR backend
+  (holds the app secret; never embed it in the app). Provider runs on every show (launches
+  expire ±5 min). See docs/SIGNING.md.
+
+## Launch URL
+`{base}/?app_id={appId}&user_id={userId}` + secure `&ts=&nonce=&sig=` + always `&locale=`
+(device locale mapped to en/id/es/pt, fallback en; secure mode uses the signed locale).
+
+## JS bridge (see docs/BRIDGE.md)
+`window.TheQuestNative` shim injected via onPageStarted/onPageFinished; `_post` calls the
+`TheQuestAndroid` @JavascriptInterface `postMessage(json)`. Messages: openUrl / close / ready.
+`openUrl` opens an external Intent (ACTION_VIEW; supports intent:// + browser_fallback_url).
+
+## Low-end optimizations
+XML LinearLayout header (no Compose); single reused WebView destroyed cleanly;
+`onRenderProcessGone` finishes gracefully; conservative WebView settings; file/content
+access disabled; third-party cookies enabled (qs_session is SameSite=None).
+
+## Key files
+- sdk/src/main/kotlin/world/humanlabs/quest/TheQuest.kt — public object + session holder
+- sdk/src/main/kotlin/world/humanlabs/quest/OfferwallActivity.kt — WebView host
+- sdk/src/main/kotlin/world/humanlabs/quest/config/QuestConfig.kt — manifest reader
+- sdk/src/main/kotlin/world/humanlabs/quest/bridge/QuestBridge.kt — @JavascriptInterface
+- sdk/src/main/kotlin/world/humanlabs/quest/internal/LaunchUrlBuilder.kt — pure URL builder
+- sdk/src/main/kotlin/world/humanlabs/quest/models/LaunchToken.kt

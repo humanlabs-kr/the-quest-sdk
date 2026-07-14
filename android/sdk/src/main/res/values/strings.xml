@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tq_title">Rewards</string>
+    <string name="tq_close_content_description">Close</string>
+    <string name="tq_error_message">Something went wrong. Please check your connection and try again.</string>
+    <string name="tq_retry">Retry</string>
+</resources>

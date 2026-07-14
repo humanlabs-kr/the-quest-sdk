@@ -1,0 +1,45 @@
+# @thequest/offerwall-expo
+
+Expo / React Native SDK that embeds The Quest offerwall in a full-screen
+react-native-webview with a native header. Pure JS/TS wrapper — no custom native
+module.
+
+## Install
+npx expo install @thequest/offerwall-expo react-native-webview expo-constants expo-linking expo-localization
+
+## Configure (build-time)
+Set `extra.theQuest` in app.json / app.config:
+  { "expo": { "extra": { "theQuest": { "appId": "<10-char App ID>", "environment": "production" } } } }
+`environment` is "production" (default, https://quest.humanlabs.world) or
+"staging" (https://quest.seriesc.dev). App ID is NOT secret.
+Optional config plugin: plugins: [["@thequest/offerwall-expo", { "appId": "...", "environment": "production" }]]
+
+## Usage
+1. Mount once at app root:
+   import { TheQuestProvider } from "@thequest/offerwall-expo";
+   <TheQuestProvider>{app}</TheQuestProvider>
+2. Show the offerwall from anywhere:
+   import { TheQuest } from "@thequest/offerwall-expo";
+   await TheQuest.show({ userId });                 // standard (unsigned) mode
+   await TheQuest.show({ userId, launchProvider }); // secure mode
+   show() resolves when the offerwall is closed and calls options.onClose.
+
+## Public API
+- TheQuestProvider(props: { children }): required host for the imperative modal.
+- TheQuest.show(options): Promise<void>
+    options: { userId: string; launchProvider?: (userId) => Promise<LaunchToken>;
+               onClose?: () => void; locale?: string }
+- LaunchToken: { ts: string | number; nonce: string; sig: string; locale?: string }
+- SDK_VERSION: string
+
+## Secure mode (opt-in, App IDs flagged require_signed_launch)
+The app secret must NEVER be embedded in the app. `launchProvider` calls YOUR
+backend, which signs HMAC-SHA256(app_secret, [app_id,user_id,ts,nonce,locale].join("."))
+and returns { ts, nonce, sig, locale? }. Called on every show() (launches expire ±5 min).
+
+## Launch URL
+{base}/?app_id=..&user_id=..[&ts=&nonce=&sig=]&locale=..
+
+## Native <-> web bridge (docs/BRIDGE.md)
+Injected window.TheQuestNative: openUrl(url) (external only, via Linking),
+close(), ready(). platform="expo". UA appends "TheQuestSDK/<version> (expo)".
