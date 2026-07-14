@@ -71,7 +71,7 @@ Required GitHub Actions **secrets** (never committed — this is a public repo):
 |--------|---------|
 | `NPM_TOKEN` | publish-expo → npm |
 | `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD` | publish-android → Maven Central |
-| `SIGNING_KEY`, `SIGNING_KEY_PASSWORD` | publish-android → GPG signing |
+| `GPG_SIGNING_KEY`, `GPG_SIGNING_PASSWORD` | publish-android → GPG signing |
 | `COCOAPODS_TRUNK_TOKEN` | publish-ios → CocoaPods trunk |
 | `RELEASE_PLEASE_TOKEN` *(one-time)* | release-please → open Release PRs (see below) |
 
