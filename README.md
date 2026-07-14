@@ -5,13 +5,13 @@ WebView with a native header — you call **`show()`** and we handle the rest.
 
 - **iOS** (Swift, WKWebView) → CocoaPods `TheQuestOfferwall`
 - **Android** (Kotlin, WebView) → Maven Central `world.humanlabs:quest-offerwall`
-- **Expo / React Native** (`react-native-webview`) → npm `@thequest/offerwall-expo`
+- **Expo / React Native** (`react-native-webview`) → npm `@humanlabs-kr/quest-offerwall-expo`
 
 | Platform | Package | Min version |
 |----------|---------|-------------|
 | iOS | `TheQuestOfferwall` (CocoaPods / SPM) | iOS 15+ |
 | Android | `world.humanlabs:quest-offerwall` | minSdk 24 (Android 7.0) |
-| Expo | `@thequest/offerwall-expo` | Expo SDK 51+ / RN 0.74+ |
+| Expo | `@humanlabs-kr/quest-offerwall-expo` | Expo SDK 51+ / RN 0.74+ |
 
 ## How it works
 

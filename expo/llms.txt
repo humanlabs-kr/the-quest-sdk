@@ -1,25 +1,25 @@
-# @thequest/offerwall-expo
+# @humanlabs-kr/quest-offerwall-expo
 
 Expo / React Native SDK that embeds The Quest offerwall in a full-screen
 react-native-webview with a native header. Pure JS/TS wrapper — no custom native
 module.
 
 ## Install
-npx expo install @thequest/offerwall-expo react-native-webview expo-constants expo-linking expo-localization
+npx expo install @humanlabs-kr/quest-offerwall-expo react-native-webview expo-constants expo-linking expo-localization
 
 ## Configure (build-time)
 Set `extra.theQuest` in app.json / app.config:
   { "expo": { "extra": { "theQuest": { "appId": "<10-char App ID>", "environment": "production" } } } }
 `environment` is "production" (default, https://quest.humanlabs.world) or
 "staging" (https://quest.seriesc.dev). App ID is NOT secret.
-Optional config plugin: plugins: [["@thequest/offerwall-expo", { "appId": "...", "environment": "production" }]]
+Optional config plugin: plugins: [["@humanlabs-kr/quest-offerwall-expo", { "appId": "...", "environment": "production" }]]
 
 ## Usage
 1. Mount once at app root:
-   import { TheQuestProvider } from "@thequest/offerwall-expo";
+   import { TheQuestProvider } from "@humanlabs-kr/quest-offerwall-expo";
    <TheQuestProvider>{app}</TheQuestProvider>
 2. Show the offerwall from anywhere:
-   import { TheQuest } from "@thequest/offerwall-expo";
+   import { TheQuest } from "@humanlabs-kr/quest-offerwall-expo";
    await TheQuest.show({ userId });                 // standard (unsigned) mode
    await TheQuest.show({ userId, launchProvider }); // secure mode
    show() resolves when the offerwall is closed and calls options.onClose.

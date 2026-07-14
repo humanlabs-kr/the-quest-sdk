@@ -1,11 +1,11 @@
-// Optional Expo config plugin for @thequest/offerwall-expo.
+// Optional Expo config plugin for @humanlabs-kr/quest-offerwall-expo.
 //
 // Lets integrators configure the SDK from their app config instead of writing
 // `extra.theQuest` by hand:
 //
 //   // app.json
 //   { "expo": { "plugins": [
-//       ["@thequest/offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
+//       ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
 //   ] } }
 //
 // Everything the plugin does is also achievable by setting `extra.theQuest`

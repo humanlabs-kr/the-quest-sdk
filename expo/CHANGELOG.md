@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Initial release of `@thequest/offerwall-expo`.
+- Initial release of `@humanlabs-kr/quest-offerwall-expo`.
 - `TheQuest.show()` + `<TheQuestProvider>` to present the hosted offerwall in a
   full-screen `react-native-webview`.
 - Standard (unsigned) and secure (`launchProvider`) launch modes.
