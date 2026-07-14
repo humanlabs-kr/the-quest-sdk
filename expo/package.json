@@ -1,6 +1,6 @@
 {
-  "name": "@thequest/offerwall-expo",
-  "version": "0.1.0",
+  "name": "@humanlabs-kr/quest-offerwall-expo",
+  "version": "0.2.0",
   "description": "Drop-in Expo / React Native SDK to embed The Quest offerwall in a hosted WebView.",
   "keywords": [
     "offerwall",

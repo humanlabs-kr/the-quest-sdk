@@ -1,4 +1,4 @@
-# @thequest/offerwall-expo
+# @humanlabs-kr/quest-offerwall-expo
 
 Drop-in **Expo / React Native** SDK to embed **The Quest** offerwall in a
 full-screen WebView with a native header. You call `show()` — we host the rest.
@@ -9,7 +9,7 @@ full-screen WebView with a native header. You call `show()` — we host the rest
 ## Install
 
 ```sh
-npx expo install @thequest/offerwall-expo react-native-webview expo-constants expo-linking expo-localization
+npx expo install @humanlabs-kr/quest-offerwall-expo react-native-webview expo-constants expo-linking expo-localization
 ```
 
 ## Configure (build-time)
@@ -41,7 +41,7 @@ it into your build. The environment is fixed per build channel (default
 {
   "expo": {
     "plugins": [
-      ["@thequest/offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
+      ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
     ]
   }
 }
@@ -56,7 +56,7 @@ Both write to `extra.theQuest`; pick whichever you prefer.
 Required — it hosts the imperative modal so you can call `show()` from anywhere.
 
 ```tsx
-import { TheQuestProvider } from "@thequest/offerwall-expo";
+import { TheQuestProvider } from "@humanlabs-kr/quest-offerwall-expo";
 
 export default function App() {
   return (
@@ -73,7 +73,7 @@ This is how most offerwalls work — the value transfer is protected on the rewa
 **postback** (server → your backend), not on opening the offerwall.
 
 ```tsx
-import { TheQuest } from "@thequest/offerwall-expo";
+import { TheQuest } from "@humanlabs-kr/quest-offerwall-expo";
 
 async function openOfferwall(userId: string) {
   await TheQuest.show({
@@ -94,7 +94,7 @@ secret.
 > See [`docs/SIGNING.md`](https://github.com/humanlabs-kr/the-quest-sdk/blob/main/docs/SIGNING.md).
 
 ```tsx
-import { TheQuest, type LaunchToken } from "@thequest/offerwall-expo";
+import { TheQuest, type LaunchToken } from "@humanlabs-kr/quest-offerwall-expo";
 
 async function fetchLaunchToken(userId: string): Promise<LaunchToken> {
   const res = await fetch("https://api.yourapp.com/quest/launch-token", {

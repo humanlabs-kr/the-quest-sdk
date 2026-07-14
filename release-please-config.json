@@ -14,7 +14,7 @@
     "expo": {
       "release-type": "node",
       "component": "expo",
-      "package-name": "@thequest/offerwall-expo"
+      "package-name": "@humanlabs-kr/quest-offerwall-expo"
     },
     "android": {
       "release-type": "simple",

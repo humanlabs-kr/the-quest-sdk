@@ -115,7 +115,7 @@ export function TheQuestProvider({
       if (!config?.appId) {
         const message =
           "[TheQuest] Missing appId. Set `extra.theQuest.appId` in app.json/app.config, " +
-          "or use the @thequest/offerwall-expo config plugin.";
+          "or use the @humanlabs-kr/quest-offerwall-expo config plugin.";
         console.error(message);
         request.reject(new Error(message));
         return;
