@@ -16,12 +16,21 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      # Mint a short-lived token for the humanlabs deploy bot (GitHub App). Using an
+      # App installation token instead of the default GITHUB_TOKEN is what makes the
+      # release tags this action pushes actually fire the `publish-*` workflows —
+      # GitHub suppresses workflow triggers for GITHUB_TOKEN-created events (recursion
+      # guard), but not for App/PAT-created ones. It also lets release-please open PRs
+      # when the org disables "Actions may create PRs". Same bot/secrets as the
+      # conductor deploy workflows (DEPLOY_BOT_ID / DEPLOY_BOT_SECRET).
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.DEPLOY_BOT_ID }}
+          private-key: ${{ secrets.DEPLOY_BOT_SECRET }}
+          owner: ${{ github.repository_owner }}
       - uses: googleapis/release-please-action@v4
         with:
-          # The default GITHUB_TOKEN cannot open PRs when the org disables
-          # "Allow GitHub Actions to create and approve pull requests". Add a
-          # RELEASE_PLEASE_TOKEN repo secret (a PAT with repo scope) to bypass that
-          # org policy without changing org settings; otherwise enable the org toggle.
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
