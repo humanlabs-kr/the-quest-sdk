@@ -24,6 +24,14 @@ import { SDK_VERSION } from "./version";
 
 const APPLICATION_NAME_FOR_UA = `TheQuestSDK/${SDK_VERSION} (expo)`;
 
+// `mediaTypes` shifted shape across expo-image-picker majors: ≤15 takes the
+// `MediaTypeOptions` enum, while ≥16 deprecates it for a `MediaType` string ("images").
+// We build against the `>=14` peer range, so prefer the enum while it still exists
+// (correct on every current version) and fall back to the string literal only if a
+// future major removes it. `unknown` bridges the version-dependent option type.
+const IMAGES_ONLY = (ImagePicker.MediaTypeOptions?.Images ??
+  "images") as unknown as ImagePicker.ImagePickerOptions["mediaTypes"];
+
 function getDeviceLocale(): string | undefined {
   try {
     const locales = Localization.getLocales();
@@ -166,7 +174,7 @@ export function TheQuestProvider({
     let images: string[] = [];
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: IMAGES_ONLY,
         allowsMultipleSelection: multiple,
         base64: true,
         quality: 0.7,
