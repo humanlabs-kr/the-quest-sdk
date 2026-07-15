@@ -13,6 +13,9 @@ enum BridgeScript {
         case openUrl(URL)
         case close
         case ready
+        /// Web asks native to present a permission-free photo picker (bypasses WKWebView's
+        /// camera-bearing file panel). Result is returned via `imagesPickedJS`.
+        case pickImages(requestId: String, multiple: Bool)
 
         /// Parses a message body delivered by `WKScriptMessage`.
         ///
@@ -34,10 +37,30 @@ enum BridgeScript {
                 return .close
             case "ready":
                 return .ready
+            case "pickImages":
+                guard let requestId = dict["requestId"] as? String, !requestId.isEmpty else {
+                    return nil
+                }
+                let multiple = (dict["multiple"] as? Bool) ?? false
+                return .pickImages(requestId: requestId, multiple: multiple)
             default:
                 return nil
             }
         }
+    }
+
+    /// JS that delivers picked image data URLs back to the web for `requestId`, over the
+    /// reserved `thequest:native` channel (docs/BRIDGE.md §4). Returns `[]` on cancel.
+    static func imagesPickedJS(requestId: String, dataURLs: [String]) -> String {
+        let payload: [String: Any] = [
+            "type": "imagesPicked",
+            "requestId": requestId,
+            "images": dataURLs,
+        ]
+        let json = (try? JSONSerialization.data(withJSONObject: payload))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        // `json` is machine-generated JSON (a valid JS object literal); safe to interpolate.
+        return "window.dispatchEvent(new MessageEvent('thequest:native', { data: \(json) }));"
     }
 
     /// The JavaScript injected at `.atDocumentStart`. Mirrors the shared bridge contract:

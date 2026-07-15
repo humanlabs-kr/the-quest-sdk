@@ -17,7 +17,7 @@ WebView with a native header — you call **`show()`** and we handle the rest.
 
 1. You get an **App ID** (10 chars) from the Quest admin. It is **not secret** — you bake it
    into your build (Info.plist / AndroidManifest / `app.json extra`).
-2. You call `show(userId)`. The SDK opens the offerwall WebView pointed at your environment.
+2. You call `show(userId)`. The SDK opens the offerwall WebView pointed at the offerwall URL.
 3. The WebView exchanges a signed/unsigned launch for an httpOnly session and renders the
    offerwall in your app's reward unit.
 4. The native header's close button (or `TheQuestNative.close()` from web) dismisses the
@@ -37,20 +37,19 @@ The offerwall supports two launch modes, chosen **per App ID** in the admin:
 > Never put your app secret in the mobile app. In secure mode, sign on your server.
 > See [`docs/SIGNING.md`](docs/SIGNING.md).
 
-## Environment (staging vs production)
+## Base URL
 
-Environment is a **build-time setting**, not a `show()` argument — the offerwall URL is
-fixed per build channel. Default is **production**; opt into staging only for QA builds.
-
-| environment  | URL |
-|--------------|-----|
-| `production` (default) | `https://quest.humanlabs.world` |
-| `staging`    | `https://quest.seriesc.dev` |
+The offerwall base URL is a **build-time setting**, not a `show()` argument. It defaults to
+**production** (`https://quest.humanlabs.world`). Override it only for staging QA
+(`https://quest.seriesc.dev`), a self-hosted deployment, or local development
+(e.g. `http://localhost:5173`).
 
 Set it alongside your App ID:
-- iOS: `TheQuestEnvironment` in `Info.plist`
-- Android: `world.humanlabs.quest.ENVIRONMENT` `<meta-data>`
-- Expo: `extra.theQuest.environment` in `app.json`
+- iOS: `TheQuestBaseURL` in `Info.plist`
+- Android: `world.humanlabs.quest.BASE_URL` `<meta-data>`
+- Expo: `extra.theQuest.baseUrl` in `app.json`
+
+Leave it unset to use production.
 
 ## Quick start
 

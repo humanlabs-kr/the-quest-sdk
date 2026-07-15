@@ -4,39 +4,30 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 
-/** Target offerwall environment, selected at build time via manifest `<meta-data>`. */
-enum class Environment(val baseUrl: String) {
-    PRODUCTION("https://quest.humanlabs.world"),
-    STAGING("https://quest.seriesc.dev");
-
-    companion object {
-        /** Parse a manifest value; anything other than "staging" (case-insensitive) is production. */
-        fun from(raw: String?): Environment =
-            if (raw?.trim()?.equals("staging", ignoreCase = true) == true) STAGING else PRODUCTION
-    }
-}
-
 /**
  * Build-time configuration read from the consuming app's `AndroidManifest.xml` `<meta-data>`.
  *
  * ```xml
  * <meta-data android:name="world.humanlabs.quest.APP_ID" android:value="abcd012345" />
- * <meta-data android:name="world.humanlabs.quest.ENVIRONMENT" android:value="production" />
+ * <meta-data android:name="world.humanlabs.quest.BASE_URL" android:value="https://quest.humanlabs.world" />
  * ```
  *
- * @property appId       The 10-char App ID from the Quest admin (not secret).
- * @property environment Selected environment (defaults to production).
+ * @property appId   The 10-char App ID from the Quest admin (not secret).
+ * @property baseUrl The offerwall base URL. Defaults to production; set it for staging,
+ *   self-hosted deployments, or local development (e.g. `http://10.0.2.2:5173`).
  */
 data class QuestConfig(
     val appId: String,
-    val environment: Environment,
+    val baseUrl: String = DEFAULT_BASE_URL,
 ) {
-    val baseUrl: String get() = environment.baseUrl
-
     companion object {
         private const val TAG = "TheQuest"
+
+        /** The default (production) offerwall base URL, used when [META_BASE_URL] is unset. */
+        const val DEFAULT_BASE_URL = "https://quest.humanlabs.world"
+
         const val META_APP_ID = "world.humanlabs.quest.APP_ID"
-        const val META_ENVIRONMENT = "world.humanlabs.quest.ENVIRONMENT"
+        const val META_BASE_URL = "world.humanlabs.quest.BASE_URL"
 
         /**
          * Read configuration from the manifest. Returns `null` (and logs) when [META_APP_ID]
@@ -74,8 +65,9 @@ data class QuestConfig(
             }
 
             @Suppress("DEPRECATION")
-            val environment = Environment.from(metaData.get(META_ENVIRONMENT)?.toString())
-            return QuestConfig(appId = appId, environment = environment)
+            val baseUrl = metaData.get(META_BASE_URL)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
+                ?: DEFAULT_BASE_URL
+            return QuestConfig(appId = appId, baseUrl = baseUrl)
         }
     }
 }

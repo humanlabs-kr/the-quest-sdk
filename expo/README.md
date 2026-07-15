@@ -15,13 +15,14 @@ npx expo install @humanlabs-kr/quest-offerwall-expo react-native-webview expo-co
 ## Configure (build-time)
 
 Your **App ID** (10 chars) comes from the Quest admin. It is **not secret** — bake
-it into your build. The environment is fixed per build channel (default
-`production`).
+it into your build. The offerwall base URL defaults to **production**; override it
+only for staging QA, a self-hosted deployment, or local development.
 
-| environment | URL |
-|-------------|-----|
-| `production` (default) | `https://quest.humanlabs.world` |
-| `staging` | `https://quest.seriesc.dev` |
+| baseUrl | when |
+|---------|------|
+| _(unset)_ / `https://quest.humanlabs.world` | production (default) |
+| `https://quest.seriesc.dev` | staging QA |
+| `http://localhost:5173` | local development |
 
 **Option A — `extra.theQuest` (manual):**
 
@@ -29,7 +30,7 @@ it into your build. The environment is fixed per build channel (default
 {
   "expo": {
     "extra": {
-      "theQuest": { "appId": "abc1234567", "environment": "production" }
+      "theQuest": { "appId": "abc1234567" }
     }
   }
 }
@@ -41,7 +42,7 @@ it into your build. The environment is fixed per build channel (default
 {
   "expo": {
     "plugins": [
-      ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
+      ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567" }]
     ]
   }
 }
@@ -135,7 +136,7 @@ interface LaunchToken {
 
 ## How it works
 
-1. `show()` builds the launch URL for your baked App ID + environment and opens a
+1. `show()` builds the launch URL for your baked App ID + base URL and opens a
    full-screen modal with a native header (close button) and a `WebView`.
 2. The WebView exchanges the (signed/unsigned) launch for an httpOnly session and
    renders the offerwall.

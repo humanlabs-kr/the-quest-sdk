@@ -21,8 +21,8 @@ Published to Maven Central, so `mavenCentral()` in your repositories is all you 
 
 ## Configure
 
-Your **App ID** (10 chars, from the Quest admin) and the environment are build-time
-settings. Add them to your app's `AndroidManifest.xml` inside `<application>`:
+Your **App ID** (10 chars, from the Quest admin) and (optionally) the base URL are
+build-time settings. Add them to your app's `AndroidManifest.xml` inside `<application>`:
 
 ```xml
 <application ...>
@@ -30,17 +30,16 @@ settings. Add them to your app's `AndroidManifest.xml` inside `<application>`:
         android:name="world.humanlabs.quest.APP_ID"
         android:value="abcd012345" />
 
-    <!-- optional: "production" (default) or "staging" -->
+    <!-- optional; omit to use production. Set for staging / self-host / local dev. -->
     <meta-data
-        android:name="world.humanlabs.quest.ENVIRONMENT"
-        android:value="production" />
+        android:name="world.humanlabs.quest.BASE_URL"
+        android:value="https://quest.humanlabs.world" />
 </application>
 ```
 
-| Environment | URL |
-|-------------|-----|
-| `production` (default) | `https://quest.humanlabs.world` |
-| `staging` | `https://quest.seriesc.dev` |
+The base URL defaults to production (`https://quest.humanlabs.world`); use
+`https://quest.seriesc.dev` for staging QA, or your own URL for a self-hosted / local
+deployment.
 
 The App ID is **not secret** — it is safe to bake into your build. If it is missing, the
 SDK logs an error and no-ops (it never crashes your app).

@@ -49,6 +49,8 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    // Photo Picker (PickVisualMedia) for permission-free <input type="file"> handling.
+    implementation("androidx.activity:activity:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

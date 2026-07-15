@@ -10,8 +10,9 @@ UIKit + WebKit only. Package/product/target name: TheQuestOfferwall.
 
 ## Configure (build-time, Bundle.main Info.plist)
 - `TheQuestAppId` (String, REQUIRED): 10-char app id (not secret). Missing/empty => show() logs an error and aborts (no crash).
-- `TheQuestEnvironment` (String, optional): "production" (default) or "staging".
-- Environment base URLs: production=https://quest.humanlabs.world, staging=https://quest.seriesc.dev
+- `TheQuestBaseURL` (String, optional): offerwall base URL. Defaults to production
+  (https://quest.humanlabs.world). Set for staging (https://quest.seriesc.dev),
+  self-hosting, or local dev (http://localhost:5173).
 
 ## Public API
 ```swift
@@ -35,7 +36,6 @@ public struct LaunchToken: Sendable {
   public init(ts: String, nonce: String, sig: String, locale: String? = nil)
 }
 
-public enum TheQuestEnvironment: String, Sendable { case production, staging }
 public enum TheQuestError: Error { case invalidLaunchURL }
 public enum SDKInfo { public static let version: String } // "0.1.0"
 ```
@@ -64,7 +64,7 @@ All values percent-encoded. Standard-mode locale = device locale mapped to en/id
 
 ## Files
 - Sources/TheQuestOfferwall/TheQuest.swift — singleton + show()
-- Sources/TheQuestOfferwall/Config/TheQuestConfig.swift — Info.plist reader + Environment + base URL
+- Sources/TheQuestOfferwall/Config/TheQuestConfig.swift — Info.plist reader + base URL
 - Sources/TheQuestOfferwall/Models/LaunchToken.swift
 - Sources/TheQuestOfferwall/WebView/OfferwallViewController.swift
 - Sources/TheQuestOfferwall/WebView/LaunchURLBuilder.swift — pure, unit-tested URL builder

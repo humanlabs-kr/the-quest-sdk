@@ -10,12 +10,13 @@ import {
   Text,
   View,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import * as Linking from "expo-linking";
 import * as Localization from "expo-localization";
 import { WebView } from "react-native-webview";
 
 import { BRIDGE_SHIM, parseBridgeMessage } from "./bridge";
-import { baseUrlFor, readConfig } from "./config";
+import { readConfig, resolveBaseUrl } from "./config";
 import { buildLaunchUrl, mapLocale } from "./launchUrl";
 import { _registerHost, type ShowRequest } from "./TheQuest";
 import type { LaunchToken } from "./types";
@@ -129,7 +130,7 @@ export function TheQuestProvider({
       }
 
       requestRef.current = request;
-      baseUrlRef.current = baseUrlFor(config.environment);
+      baseUrlRef.current = resolveBaseUrl(config);
       setError(null);
       setReady(false);
       setUri(null);
@@ -156,6 +157,36 @@ export function TheQuestProvider({
     }
   }, [prepare, uri]);
 
+  // Present the system photo picker and hand the picked images back to the web over the
+  // reserved `thequest:native` channel. expo-image-picker's library flow uses PHPicker
+  // (iOS) / the Photo Picker (Android) out-of-process — no permission prompt, no camera.
+  // This exists so the iOS offerwall never falls back to WKWebView's camera-bearing file
+  // panel (which crashes the host app without NSCameraUsageDescription).
+  const pickImages = useCallback(async (requestId: string, multiple: boolean) => {
+    let images: string[] = [];
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: multiple,
+        base64: true,
+        quality: 0.7,
+      });
+      if (!result.canceled) {
+        images = result.assets
+          .map((a) =>
+            a.base64 ? `data:${a.mimeType ?? "image/jpeg"};base64,${a.base64}` : null,
+          )
+          .filter((x): x is string => x !== null);
+      }
+    } catch (err) {
+      console.warn("[TheQuest] photo picker failed:", err);
+    }
+    const payload = JSON.stringify({ type: "imagesPicked", requestId, images });
+    webViewRef.current?.injectJavaScript(
+      `window.dispatchEvent(new MessageEvent('thequest:native', { data: ${payload} })); true;`,
+    );
+  }, []);
+
   const handleMessage = useCallback(
     (data: unknown) => {
       const message = parseBridgeMessage(data);
@@ -177,11 +208,19 @@ export function TheQuestProvider({
         case "ready":
           setReady(true);
           break;
+        case "pickImages": {
+          const requestId = (message as { requestId?: unknown }).requestId;
+          const multiple = (message as { multiple?: unknown }).multiple === true;
+          if (typeof requestId === "string" && requestId.length > 0) {
+            void pickImages(requestId, multiple);
+          }
+          break;
+        }
         default:
           break;
       }
     },
-    [finish],
+    [finish, pickImages],
   );
 
   // Keep the WebView on our own origin; route everything else to the OS.
@@ -263,18 +302,9 @@ function TheQuestModal(props: ModalProps): React.JSX.Element {
       statusBarTranslucent
     >
       <SafeAreaView style={styles.container}>
+        {/* No native header: the web renders its own header (with a bridge-wired close
+            button). Only the system-bar inset spacer remains. */}
         <View style={styles.androidStatusBarInset} />
-        <View style={styles.header}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-            hitSlop={12}
-            onPress={onClose}
-            style={styles.closeButton}
-          >
-            <Text style={styles.closeIcon}>✕</Text>
-          </Pressable>
-        </View>
 
         <View style={styles.body}>
           {error ? (
@@ -286,6 +316,11 @@ function TheQuestModal(props: ModalProps): React.JSX.Element {
                 style={styles.retryButton}
               >
                 <Text style={styles.retryText}>Retry</Text>
+              </Pressable>
+              {/* With no native header, this is the only close affordance when the web
+                  (which otherwise renders the close button) fails to load. */}
+              <Pressable accessibilityRole="button" onPress={onClose} hitSlop={12}>
+                <Text style={styles.errorClose}>Close</Text>
               </Pressable>
             </View>
           ) : uri ? (
@@ -299,7 +334,13 @@ function TheQuestModal(props: ModalProps): React.JSX.Element {
               sharedCookiesEnabled
               thirdPartyCookiesEnabled
               domStorageEnabled
-              originWhitelist={["https://*"]}
+              // Allow both http and https to reach our own gate below. react-native-webview
+              // punts any URL whose origin isn't whitelisted straight to the OS browser
+              // BEFORE onShouldStartLoadWithRequest runs — so an https-only whitelist would
+              // open a local `http://…` base (dev) in Safari instead of loading it in-app.
+              // `onShouldStart` is the real gate: it loads only our base origin in-app and
+              // routes every other origin (and custom-scheme deep links) out to the OS.
+              originWhitelist={["http://*", "https://*"]}
               onShouldStartLoadWithRequest={(request) => onShouldStart(request.url)}
               startInLoadingState
               renderLoading={() => <View />}
@@ -333,25 +374,6 @@ const styles = StyleSheet.create({
   androidStatusBarInset: {
     height: Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0,
   },
-  header: {
-    height: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E7EB",
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeIcon: {
-    fontSize: 22,
-    lineHeight: 24,
-    color: "#111827",
-  },
   body: {
     flex: 1,
   },
@@ -381,5 +403,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
+  },
+  errorClose: {
+    marginTop: 16,
+    fontSize: 15,
+    color: "#6B7280",
   },
 });

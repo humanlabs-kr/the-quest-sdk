@@ -9,10 +9,11 @@ npx expo install @humanlabs-kr/quest-offerwall-expo react-native-webview expo-co
 
 ## Configure (build-time)
 Set `extra.theQuest` in app.json / app.config:
-  { "expo": { "extra": { "theQuest": { "appId": "<10-char App ID>", "environment": "production" } } } }
-`environment` is "production" (default, https://quest.humanlabs.world) or
-"staging" (https://quest.seriesc.dev). App ID is NOT secret.
-Optional config plugin: plugins: [["@humanlabs-kr/quest-offerwall-expo", { "appId": "...", "environment": "production" }]]
+  { "expo": { "extra": { "theQuest": { "appId": "<10-char App ID>" } } } }
+`baseUrl` (optional) defaults to production (https://quest.humanlabs.world). Set it for
+staging (https://quest.seriesc.dev), self-hosting, or local dev (http://localhost:5173).
+App ID is NOT secret.
+Optional config plugin: plugins: [["@humanlabs-kr/quest-offerwall-expo", { "appId": "..." }]]
 
 ## Usage
 1. Mount once at app root:

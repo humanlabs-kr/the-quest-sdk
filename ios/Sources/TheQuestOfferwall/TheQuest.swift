@@ -10,7 +10,7 @@ public enum TheQuestError: Error {
 
 /// Entry point for embedding **The Quest** offerwall.
 ///
-/// Configure your app id (and optional environment) in `Info.plist`, then call
+/// Configure your app id (and optional base URL) in `Info.plist`, then call
 /// ``show(from:userId:launchProvider:onClose:)``:
 ///
 /// ```swift

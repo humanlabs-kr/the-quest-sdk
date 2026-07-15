@@ -31,18 +31,19 @@ package directory.)
 
 ## Configure (Info.plist)
 
-Add your app id (and, optionally, the environment) to your app target's `Info.plist`:
+Add your app id (and, optionally, the base URL) to your app target's `Info.plist`:
 
 | Key | Type | Required | Values |
 |-----|------|----------|--------|
 | `TheQuestAppId` | String | ✅ | Your 10-character app id (not secret) |
-| `TheQuestEnvironment` | String | — | `production` (default) or `staging` |
+| `TheQuestBaseURL` | String | — | Offerwall URL. Defaults to production (`https://quest.humanlabs.world`); set for staging / self-host / local dev |
 
 ```xml
 <key>TheQuestAppId</key>
 <string>ABCDE12345</string>
-<key>TheQuestEnvironment</key>
-<string>production</string>
+<!-- optional; omit to use production -->
+<key>TheQuestBaseURL</key>
+<string>https://quest.humanlabs.world</string>
 ```
 
 > No associated-domains / Universal Links entitlement is required — the offerwall is
@@ -95,7 +96,7 @@ example backend endpoint.
 
 ## Behavior notes
 
-- **Environment** is build-time (Info.plist), not a `show()` argument.
+- **Base URL** is build-time (Info.plist), not a `show()` argument. Defaults to production.
 - **Locale** is derived from the device and mapped to one of `en` / `id` / `es` / `pt`
   (fallback `en`). In secure mode the locale the backend signed is used verbatim.
 - **Close** is triggered by the header ✕ button, the web `TheQuestNative.close()` call,

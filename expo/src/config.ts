@@ -1,11 +1,9 @@
 import Constants from "expo-constants";
 
-import type { Environment, TheQuestConfig } from "./types";
+import type { TheQuestConfig } from "./types";
 
-const BASE_URLS: Record<Environment, string> = {
-  production: "https://quest.humanlabs.world",
-  staging: "https://quest.seriesc.dev",
-};
+/** The default (production) offerwall base URL, used when `baseUrl` is unset. */
+export const DEFAULT_BASE_URL = "https://quest.humanlabs.world";
 
 /**
  * Reads `extra.theQuest` from the Expo app config. Returns `undefined` when it
@@ -24,7 +22,11 @@ export function readConfig(): TheQuestConfig | undefined {
   return theQuest;
 }
 
-/** Resolves the hosted offerwall base URL for the given environment. */
-export function baseUrlFor(environment?: Environment): string {
-  return BASE_URLS[environment ?? "production"] ?? BASE_URLS.production;
+/**
+ * Resolves the offerwall base URL for a config: an explicit `baseUrl` wins,
+ * otherwise the production URL.
+ */
+export function resolveBaseUrl(config: TheQuestConfig | undefined): string {
+  const explicit = config?.baseUrl?.trim();
+  return explicit || DEFAULT_BASE_URL;
 }

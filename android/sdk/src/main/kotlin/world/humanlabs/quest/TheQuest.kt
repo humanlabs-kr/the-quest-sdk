@@ -12,10 +12,10 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Public entry point for The Quest offerwall SDK.
  *
- * Configure your App ID and (optionally) the environment in your app's `AndroidManifest.xml`:
+ * Configure your App ID and (optionally) the base URL in your app's `AndroidManifest.xml`:
  * ```xml
  * <meta-data android:name="world.humanlabs.quest.APP_ID" android:value="abcd012345" />
- * <meta-data android:name="world.humanlabs.quest.ENVIRONMENT" android:value="production" />
+ * <meta-data android:name="world.humanlabs.quest.BASE_URL" android:value="https://quest.humanlabs.world" />
  * ```
  * then call [show].
  */

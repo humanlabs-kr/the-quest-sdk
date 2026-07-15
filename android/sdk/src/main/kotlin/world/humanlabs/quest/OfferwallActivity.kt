@@ -9,16 +9,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -50,6 +53,33 @@ class OfferwallActivity : AppCompatActivity(), QuestBridge.Listener {
 
     private var closeInvoked = false
 
+    // ── File chooser (<input type="file">) ──────────────────────────────────────
+    // Pending WebView callback awaiting the picked file uris. Delivered exactly once.
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
+    // Registered at construction (before STARTED), as ActivityResult contracts require.
+    // The system photo picker is permission-free by design (out-of-process); on devices
+    // without it, PickVisualMedia transparently falls back to ACTION_GET_CONTENT (also
+    // permission-free). No READ_MEDIA_IMAGES / CAMERA permission is ever needed.
+    private val pickSingleImage =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            deliverFileChooserResult(if (uri != null) arrayOf(uri) else emptyArray())
+        }
+
+    private val pickMultipleImages =
+        registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+            deliverFileChooserResult(uris.toTypedArray())
+        }
+
+    // Fallback for non-image `accept` values: SAF document picker (permission-free).
+    private val pickDocument =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            deliverFileChooserResult(
+                WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+                    ?: emptyArray(),
+            )
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -71,8 +101,10 @@ class OfferwallActivity : AppCompatActivity(), QuestBridge.Listener {
         progressBar = findViewById(R.id.tq_progress)
         errorView = findViewById(R.id.tq_error)
 
-        findViewById<ImageButton>(R.id.tq_close).setOnClickListener { dismiss() }
         findViewById<Button>(R.id.tq_retry).setOnClickListener { startLoad() }
+        // No native header — the web renders its own close button (bridge → onClose). This
+        // error-screen close is the fallback when the web fails to load.
+        findViewById<Button>(R.id.tq_error_close).setOnClickListener { dismiss() }
 
         setupWebView()
         registerBackHandler()
@@ -128,6 +160,9 @@ class OfferwallActivity : AppCompatActivity(), QuestBridge.Listener {
         // own offerwall origin.
         webView.addJavascriptInterface(QuestBridge(this), QuestBridge.NAME)
         webView.webViewClient = OfferwallWebViewClient()
+        // Without a WebChromeClient, `<input type="file">` taps are silently dropped and no
+        // file selector ever opens. This routes them to the permission-free photo picker.
+        webView.webChromeClient = OfferwallWebChromeClient()
     }
 
     private fun registerBackHandler() {
@@ -269,6 +304,10 @@ class OfferwallActivity : AppCompatActivity(), QuestBridge.Listener {
         if (isFinishing) fireOnClose()
         TheQuestSession.remove(requestId)
 
+        // Release any file chooser still awaiting a result so it isn't delivered to a dead WebView.
+        filePathCallback?.onReceiveValue(null)
+        filePathCallback = null
+
         webView?.let { wv ->
             wv.removeJavascriptInterface(QuestBridge.NAME)
             wv.stopLoading()
@@ -280,6 +319,53 @@ class OfferwallActivity : AppCompatActivity(), QuestBridge.Listener {
 
         CookieManager.getInstance().flush()
         super.onDestroy()
+    }
+
+    // ── File chooser ────────────────────────────────────────────────────────────
+
+    private inner class OfferwallWebChromeClient : WebChromeClient() {
+        override fun onShowFileChooser(
+            webView: WebView?,
+            callback: ValueCallback<Array<Uri>>?,
+            params: FileChooserParams?,
+        ): Boolean {
+            // A new request supersedes any in-flight one; release the previous input first
+            // so it is never left hanging (which would make it un-tappable).
+            filePathCallback?.onReceiveValue(null)
+            filePathCallback = callback
+
+            return try {
+                if (isImageOnly(params?.acceptTypes)) {
+                    val request = PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly,
+                    )
+                    if (params?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                        pickMultipleImages.launch(request)
+                    } else {
+                        pickSingleImage.launch(request)
+                    }
+                } else {
+                    pickDocument.launch(params!!.createIntent())
+                }
+                true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to open file chooser", e)
+                deliverFileChooserResult(emptyArray())
+                false
+            }
+        }
+    }
+
+    /** Deliver the picked uris (empty on cancel) to the pending WebView callback, once. */
+    private fun deliverFileChooserResult(uris: Array<Uri>) {
+        filePathCallback?.onReceiveValue(uris)
+        filePathCallback = null
+    }
+
+    /** True when every declared `accept` type is an image mime — routes to the photo picker. */
+    private fun isImageOnly(acceptTypes: Array<String>?): Boolean {
+        val types = acceptTypes?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+        return types.isNotEmpty() && types.all { it.startsWith("image/") }
     }
 
     private inner class OfferwallWebViewClient : WebViewClient() {

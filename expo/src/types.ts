@@ -1,19 +1,20 @@
-/** Which hosted offerwall environment the build points at. */
-export type Environment = "production" | "staging";
-
 /** Locales the offerwall renders in. Everything else falls back to `en`. */
 export type QuestLocale = "en" | "id" | "es" | "pt";
 
 /**
  * Build-time configuration, read from `expo-constants`
  * (`Constants.expoConfig.extra.theQuest`). The App ID is NOT secret and is baked
- * into your build; the environment is fixed per build channel.
+ * into your build.
  */
 export interface TheQuestConfig {
   /** 10-character App ID from the Quest admin. */
   appId: string;
-  /** Defaults to `"production"`. */
-  environment?: Environment;
+  /**
+   * Optional offerwall base URL. Defaults to production
+   * (`https://quest.humanlabs.world`). Set it for staging, self-hosted deployments,
+   * or local development (e.g. `http://localhost:5173`).
+   */
+  baseUrl?: string;
 }
 
 /**

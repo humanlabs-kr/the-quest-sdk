@@ -1,3 +1,4 @@
+import PhotosUI
 import UIKit
 import WebKit
 
@@ -26,10 +27,12 @@ final class OfferwallViewController: UIViewController {
     private var didFireOnClose = false
     private var didHideSpinner = false
 
+    /// requestId of the in-flight `pickImages` bridge call, if a picker is presented.
+    private var pendingPickRequestId: String?
+
     // MARK: Views
 
     private var webView: WKWebView!
-    private let headerBar = UIView()
     private let spinner = UIActivityIndicatorView(style: .large)
     private lazy var errorView: UIView = makeErrorView()
 
@@ -68,7 +71,6 @@ final class OfferwallViewController: UIViewController {
         view.backgroundColor = .systemBackground
         presentationController?.delegate = self
         setupWebView()
-        setupHeader()
         setupSpinner()
         setupErrorView()
         applyUserAgentThenStart()
@@ -99,63 +101,15 @@ final class OfferwallViewController: UIViewController {
         webView.translatesAutoresizingMaskIntoConstraints = false
         self.webView = webView
         view.addSubview(webView)
-    }
 
-    private func setupHeader() {
-        headerBar.translatesAutoresizingMaskIntoConstraints = false
-        headerBar.backgroundColor = .systemBackground
-        view.addSubview(headerBar)
-
-        let separator = UIView()
-        separator.translatesAutoresizingMaskIntoConstraints = false
-        separator.backgroundColor = .separator
-        headerBar.addSubview(separator)
-
-        let closeButton = UIButton(type: .system)
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("\u{2715}", for: .normal) // ✕
-        closeButton.titleLabel?.font = .systemFont(ofSize: 20, weight: .medium)
-        closeButton.accessibilityLabel = "Close"
-        closeButton.tintColor = .label
-        closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
-        headerBar.addSubview(closeButton)
-
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = headerTitle
-        titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        titleLabel.textColor = .label
-        titleLabel.textAlignment = .center
-        headerBar.addSubview(titleLabel)
-
-        let guide = view.safeAreaLayoutGuide
+        // Full-bleed: the offerwall has no native header — the web renders its own header
+        // (with a close button wired to the bridge) and handles the top safe-area inset via
+        // CSS `env(safe-area-inset-top)`. Pin edge-to-edge so those insets are reported.
         NSLayoutConstraint.activate([
-            headerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            headerBar.topAnchor.constraint(equalTo: guide.topAnchor),
-            headerBar.heightAnchor.constraint(equalToConstant: 52),
-
-            separator.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor),
-            separator.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor),
-            separator.bottomAnchor.constraint(equalTo: headerBar.bottomAnchor),
-            separator.heightAnchor.constraint(equalToConstant: 1.0 / UIScreen.main.scale),
-
-            closeButton.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 8),
-            closeButton.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44),
-
-            titleLabel.centerXAnchor.constraint(equalTo: headerBar.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-            titleLabel.leadingAnchor.constraint(
-                greaterThanOrEqualTo: closeButton.trailingAnchor, constant: 8),
-            titleLabel.trailingAnchor.constraint(
-                lessThanOrEqualTo: headerBar.trailingAnchor, constant: -52),
-
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webView.topAnchor.constraint(equalTo: headerBar.bottomAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
 
@@ -197,7 +151,15 @@ final class OfferwallViewController: UIViewController {
         retry.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         retry.addTarget(self, action: #selector(handleRetryTapped), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [label, retry])
+        // With no native header, the error screen carries the only close affordance when the
+        // web (which otherwise renders the close button) fails to load.
+        let close = UIButton(type: .system)
+        close.setTitle("Close", for: .normal)
+        close.titleLabel?.font = .systemFont(ofSize: 15)
+        close.tintColor = .secondaryLabel
+        close.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
+
+        let stack = UIStackView(arrangedSubviews: [label, retry, close])
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = 16
@@ -276,7 +238,88 @@ final class OfferwallViewController: UIViewController {
             handleCloseTapped()
         case .ready:
             hideSpinner()
+        case .pickImages(let requestId, let multiple):
+            presentPhotoPicker(requestId: requestId, multiple: multiple)
         }
+    }
+
+    // MARK: Photo picker
+
+    /// Present the system photo picker. `PHPickerViewController` runs out-of-process, so it
+    /// needs **no** photo-library permission and never offers the camera — unlike the file
+    /// panel WKWebView would show for `<input type="file">`, which can crash the host app.
+    private func presentPhotoPicker(requestId: String, multiple: Bool) {
+        // Supersede any in-flight request so its web promise is settled ([]).
+        if let previous = pendingPickRequestId {
+            deliverImages(requestId: previous, dataURLs: [])
+        }
+        pendingPickRequestId = requestId
+
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = multiple ? 0 : 1 // 0 = unlimited
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    /// Load each picked image, downscale + JPEG-encode it (small bridge payload), and hand
+    /// the resulting data URLs back to the web. Order is preserved.
+    private func loadDataURLs(
+        from results: [PHPickerResult],
+        completion: @escaping ([String]) -> Void
+    ) {
+        let group = DispatchGroup()
+        var byIndex = [Int: String]()
+        let lock = NSLock()
+        for (index, result) in results.enumerated() {
+            let provider = result.itemProvider
+            guard provider.canLoadObject(ofClass: UIImage.self) else { continue }
+            group.enter()
+            provider.loadObject(ofClass: UIImage.self) { object, _ in
+                defer { group.leave() }
+                guard let image = object as? UIImage,
+                      let dataURL = Self.jpegDataURL(from: image) else { return }
+                lock.lock()
+                byIndex[index] = dataURL
+                lock.unlock()
+            }
+        }
+        group.notify(queue: .main) {
+            completion((0..<results.count).compactMap { byIndex[$0] })
+        }
+    }
+
+    /// Downscale (longest edge ≤ `maxDimension`) and JPEG-encode to a `data:` URL.
+    private static func jpegDataURL(
+        from image: UIImage,
+        maxDimension: CGFloat = 1600,
+        quality: CGFloat = 0.85
+    ) -> String? {
+        let size = image.size
+        guard size.width > 0, size.height > 0 else { return nil }
+        let longest = max(size.width, size.height)
+        let scale = longest > maxDimension ? maxDimension / longest : 1
+        let target = CGSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        format.opaque = true
+        let resized = UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
+        }
+        guard let data = resized.jpegData(compressionQuality: quality) else { return nil }
+        return "data:image/jpeg;base64,\(data.base64EncodedString())"
+    }
+
+    /// Deliver the picked data URLs (empty on cancel) to the web, once per requestId.
+    private func deliverImages(requestId: String, dataURLs: [String]) {
+        guard pendingPickRequestId == requestId else { return }
+        pendingPickRequestId = nil
+        webView.evaluateJavaScript(
+            BridgeScript.imagesPickedJS(requestId: requestId, dataURLs: dataURLs),
+            completionHandler: nil
+        )
     }
 }
 
@@ -351,8 +394,26 @@ extension OfferwallViewController: WKUIDelegate {
 
 extension OfferwallViewController: UIAdaptivePresentationControllerDelegate {
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        // Interactive (swipe) dismissal.
+        // Interactive (swipe) dismissal of the offerwall itself. (The photo picker is a
+        // separate presentation and reports its own cancel via didFinishPicking([]).)
+        pendingPickRequestId = nil
         fireOnCloseOnce()
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+
+extension OfferwallViewController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let requestId = pendingPickRequestId else { return }
+        if results.isEmpty {
+            deliverImages(requestId: requestId, dataURLs: [])
+            return
+        }
+        loadDataURLs(from: results) { [weak self] dataURLs in
+            self?.deliverImages(requestId: requestId, dataURLs: dataURLs)
+        }
     }
 }
 

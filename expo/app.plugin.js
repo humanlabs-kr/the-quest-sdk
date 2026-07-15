@@ -5,7 +5,7 @@
 //
 //   // app.json
 //   { "expo": { "plugins": [
-//       ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567", "environment": "production" }]
+//       ["@humanlabs-kr/quest-offerwall-expo", { "appId": "abc1234567" }]
 //   ] } }
 //
 // Everything the plugin does is also achievable by setting `extra.theQuest`
@@ -15,16 +15,16 @@ const pkg = require("./package.json");
 
 /**
  * @param {import('@expo/config-types').ExpoConfig} config
- * @param {{ appId?: string, environment?: "production" | "staging" }} [props]
+ * @param {{ appId?: string, baseUrl?: string }} [props]
  */
 const withTheQuest = (config, props = {}) => {
-  const { appId, environment } = props || {};
+  const { appId, baseUrl } = props || {};
 
   config.extra = config.extra || {};
   config.extra.theQuest = {
     ...(config.extra.theQuest || {}),
     ...(appId !== undefined ? { appId } : {}),
-    ...(environment !== undefined ? { environment } : {}),
+    ...(baseUrl !== undefined ? { baseUrl } : {}),
   };
 
   return config;

@@ -9,8 +9,9 @@ Min SDK 24 (Android 7.0). JDK 17.
 
 ## Configure (AndroidManifest <meta-data>, inside <application>)
 - `world.humanlabs.quest.APP_ID` (String, required) — 10-char App ID, not secret.
-- `world.humanlabs.quest.ENVIRONMENT` (String, optional) — "production" (default) or "staging".
-  production=https://quest.humanlabs.world, staging=https://quest.seriesc.dev.
+- `world.humanlabs.quest.BASE_URL` (String, optional) — offerwall base URL. Defaults to
+  production (https://quest.humanlabs.world). Set for staging (https://quest.seriesc.dev),
+  self-hosting, or local dev (http://10.0.2.2:5173 from the Android emulator).
 If APP_ID is missing the SDK logs an error and no-ops (never crashes).
 
 ## Public API

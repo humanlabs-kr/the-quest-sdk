@@ -1,51 +1,36 @@
 import Foundation
 
-/// The Quest environment (build channel). Selected at build time via the
-/// `TheQuestEnvironment` Info.plist key; it is never a runtime `show()` argument.
-public enum TheQuestEnvironment: String, Sendable {
-    case production
-    case staging
-
-    /// The offerwall base URL for this environment.
-    public var baseURL: URL {
-        switch self {
-        case .production:
-            return URL(string: "https://quest.humanlabs.world")!
-        case .staging:
-            return URL(string: "https://quest.seriesc.dev")!
-        }
-    }
-}
-
 /// Build-time configuration read from `Bundle.main`'s `Info.plist`.
 ///
 /// - `TheQuestAppId` (`String`, **required**) — your 10-character app id.
-/// - `TheQuestEnvironment` (`String`, optional) — `"production"` (default) or `"staging"`.
+/// - `TheQuestBaseURL` (`String`, optional) — the offerwall base URL. Defaults to production
+///   (`https://quest.humanlabs.world`). Set it for staging, self-hosted deployments, or local
+///   development (e.g. `http://localhost:5173`).
 public struct TheQuestConfig: Sendable {
     /// Info.plist key for the required 10-character app id.
     public static let appIdKey = "TheQuestAppId"
-    /// Info.plist key for the optional environment selector.
-    public static let environmentKey = "TheQuestEnvironment"
+    /// Info.plist key for the optional base URL.
+    public static let baseURLKey = "TheQuestBaseURL"
+
+    /// The default (production) offerwall base URL, used when `TheQuestBaseURL` is unset.
+    public static let defaultBaseURL = URL(string: "https://quest.humanlabs.world")!
 
     /// The 10-character app id baked into the host app's build.
     public let appId: String
 
-    /// The resolved environment (defaults to `.production`).
-    public let environment: TheQuestEnvironment
-
-    /// The offerwall base URL for the resolved environment.
-    public var baseURL: URL { environment.baseURL }
+    /// The resolved offerwall base URL (defaults to production).
+    public let baseURL: URL
 
     /// Creates a configuration explicitly (primarily for testing).
-    public init(appId: String, environment: TheQuestEnvironment = .production) {
+    public init(appId: String, baseURL: URL = TheQuestConfig.defaultBaseURL) {
         self.appId = appId
-        self.environment = environment
+        self.baseURL = baseURL
     }
 
     /// Reads configuration from the given bundle's Info.plist.
     ///
     /// - Returns: A validated config, or `nil` when `TheQuestAppId` is missing/empty.
-    ///   An unrecognized `TheQuestEnvironment` value falls back to `.production`.
+    ///   A missing/empty/invalid `TheQuestBaseURL` falls back to the production URL.
     public static func load(from bundle: Bundle = .main) -> TheQuestConfig? {
         guard
             let rawAppId = bundle.object(forInfoDictionaryKey: appIdKey) as? String
@@ -55,16 +40,14 @@ public struct TheQuestConfig: Sendable {
         let appId = rawAppId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !appId.isEmpty else { return nil }
 
-        let environment: TheQuestEnvironment
-        if let rawEnv = bundle.object(forInfoDictionaryKey: environmentKey) as? String,
-           let parsed = TheQuestEnvironment(
-               rawValue: rawEnv.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-           ) {
-            environment = parsed
-        } else {
-            environment = .production
+        var baseURL = defaultBaseURL
+        if let rawBase = bundle.object(forInfoDictionaryKey: baseURLKey) as? String {
+            let trimmed = rawBase.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty, let parsed = URL(string: trimmed) {
+                baseURL = parsed
+            }
         }
 
-        return TheQuestConfig(appId: appId, environment: environment)
+        return TheQuestConfig(appId: appId, baseURL: baseURL)
     }
 }
