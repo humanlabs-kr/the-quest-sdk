@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "TheQuestOfferwall"
-  s.version          = "0.2.0" # x-release-please-version
+  s.version          = "1.0.0" # x-release-please-version
   s.summary          = "Embed The Quest offerwall in your iOS app with a single show() call."
   s.description      = <<-DESC
     The Quest Offerwall SDK hosts the Quest offerwall in a WKWebView with a native header.

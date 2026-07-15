@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/humanlabs-kr/the-quest-sdk/compare/expo-v0.2.0...expo-v1.0.0) (2026-07-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* TheQuestEnvironment (iOS) / Environment (Android, Expo) is removed. Configure the offerwall base URL via `baseUrl` instead of an environment enum; it defaults to production.
+
+### Features
+
+* permission-free image picker, drop env enum, web-only header ([c4bf42b](https://github.com/humanlabs-kr/the-quest-sdk/commit/c4bf42bbeb3182a23b100e52ab5f09b5b05bbcd3))
+
 ## [0.2.0](https://github.com/humanlabs-kr/the-quest-sdk/compare/expo-v0.1.0...expo-v0.2.0) (2026-07-14)
 
 
