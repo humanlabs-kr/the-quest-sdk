@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/humanlabs-kr/the-quest-sdk/compare/expo-v1.0.0...expo-v1.0.1) (2026-07-15)
+
+
+### Bug Fixes
+
+* **expo:** tolerate expo-image-picker MediaType API across the peer range ([14d1c8f](https://github.com/humanlabs-kr/the-quest-sdk/commit/14d1c8fc7698fd44fc094fbe1ab93816376b8ae6))
+
 ## [1.0.0](https://github.com/humanlabs-kr/the-quest-sdk/compare/expo-v0.2.0...expo-v1.0.0) (2026-07-15)
 
 
